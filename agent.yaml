@@ -1,0 +1,6 @@
+name: filter-agent
+description: 문서 입력 정규화(Document Parse) + 버그 리포트 형식 판별 agent
+
+env:
+  required:
+    - UPSTAGE_API_KEY
