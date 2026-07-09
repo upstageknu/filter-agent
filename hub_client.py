@@ -44,3 +44,34 @@ def record_invocation(
     except requests.RequestException:
         # 허브 기록이 실패해도 우리 자신의 동기 응답은 정상적으로 리턴한다 (best-effort).
         pass
+
+
+def emit_event(
+    report_id: Optional[str],
+    agent_name: str,
+    event_type: str,
+    message: Optional[str] = None,
+    payload: Optional[dict] = None,
+    level: str = "INFO",
+    trace_id: Optional[str] = None,
+    request_id: Optional[str] = None,
+) -> None:
+    if not report_id:
+        return
+
+    body = {"event_type": event_type, "level": level, "source": "agent"}
+    if message:
+        body["message"] = message
+    if payload is not None:
+        body["payload"] = payload
+    if trace_id:
+        body["trace_id"] = trace_id
+    if request_id:
+        body["request_id"] = request_id
+
+    url = f"{HUB_BASE_URL}/db/workflows/{report_id}/agents/{agent_name}/events"
+    try:
+        requests.post(url, json=body, timeout=10)
+    except requests.RequestException:
+        # 디버그 로그 기록 실패는 무시한다 (best-effort).
+        pass

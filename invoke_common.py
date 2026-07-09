@@ -3,7 +3,7 @@ from typing import Callable, Optional
 
 from pydantic import BaseModel
 
-from hub_client import fetch_workflow, record_invocation
+from hub_client import emit_event, fetch_workflow, record_invocation
 from job_state import finish_job, start_job
 
 
@@ -23,6 +23,14 @@ def run_invoke(
 ) -> dict:
     start_job(req.report_id)
     start_time = time.monotonic()
+    emit_event(
+        report_id=req.report_id,
+        agent_name=agent_name,
+        event_type="agent.start",
+        message=f"{agent_name} invoke 시작",
+        trace_id=req.trace_id,
+        request_id=req.request_id,
+    )
     try:
         workflow = fetch_workflow(req.report_id)
         raw_text = (workflow.get("input") or {}).get("raw_report_txt")
@@ -41,6 +49,15 @@ def run_invoke(
             prompt_version=prompt_version,
             duration_ms=duration_ms,
         )
+        emit_event(
+            report_id=req.report_id,
+            agent_name=agent_name,
+            event_type="agent.end",
+            message=result_message,
+            payload={"duration_ms": duration_ms},
+            trace_id=req.trace_id,
+            request_id=req.request_id,
+        )
         return {"status_code": 200, "message": result_message, "output": result}
     except Exception as e:
         record_invocation(
@@ -48,6 +65,15 @@ def run_invoke(
             agent_name=agent_name,
             status="FAILED",
             error={"message": str(e)},
+        )
+        emit_event(
+            report_id=req.report_id,
+            agent_name=agent_name,
+            event_type="agent.error",
+            message=str(e),
+            level="ERROR",
+            trace_id=req.trace_id,
+            request_id=req.request_id,
         )
         return {"status_code": 500, "message": str(e), "output": {}}
     finally:
