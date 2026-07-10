@@ -13,7 +13,10 @@ DOCUMENT_PARSE_URL = os.getenv(
 )
 DOCUMENT_PARSE_MODEL = os.getenv("DOCUMENT_PARSE_MODEL", "document-parse")
 
-HUB_BASE_URL = os.getenv("HUB_BASE_URL", "https://api.mingyo.kim/upstageknu2607")
+ORCHESTRATOR_BASE_URL = os.getenv("ORCHESTRATOR_BASE_URL", "http://127.0.0.1:8000")
+HUB_BASE_URL = os.getenv(
+    "HUB_BASE_URL", f"{ORCHESTRATOR_BASE_URL.rstrip('/')}/upstageknu2607"
+)
 
 # 필터 agent가 "버그 리포트 아님"을 이 값 이상으로 확신할 때만 반려한다.
 # 애매한 리포트는 통과시켜 fact_check/debate 단계가 한 번 더 검증하게 하는 recall 우선 정책.
