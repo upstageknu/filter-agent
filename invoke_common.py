@@ -1,9 +1,10 @@
+import json
 import time
 from typing import Callable, Optional
 
 from pydantic import BaseModel
 
-from hub_client import emit_event, fetch_workflow, record_invocation
+from hub_client import emit_event, fetch_job_id, fetch_workflow, record_invocation
 from job_state import finish_job, start_job
 
 
@@ -11,6 +12,15 @@ class InvokeRequest(BaseModel):
     report_id: str
     trace_id: Optional[str] = None
     request_id: Optional[str] = None
+
+
+def _brief(result: dict, max_len: int = 300) -> str:
+    """관리자 확인용 한 줄 요약(길게 남길 필요 없음 - 핵심 결과값만)."""
+    try:
+        text = json.dumps(result, ensure_ascii=False)
+    except (TypeError, ValueError):
+        text = str(result)
+    return text if len(text) <= max_len else text[:max_len] + "..."
 
 
 def run_invoke(
@@ -23,13 +33,15 @@ def run_invoke(
 ) -> dict:
     start_job(req.report_id)
     start_time = time.monotonic()
+    job_id = fetch_job_id(req.report_id, agent_name)
     emit_event(
         report_id=req.report_id,
         agent_name=agent_name,
         event_type="agent.start",
-        message=f"{agent_name} invoke 시작",
+        message=f"{agent_name} 시작",
         trace_id=req.trace_id,
         request_id=req.request_id,
+        agent_job_id=job_id,
     )
     try:
         workflow = fetch_workflow(req.report_id)
@@ -53,10 +65,11 @@ def run_invoke(
             report_id=req.report_id,
             agent_name=agent_name,
             event_type="agent.end",
-            message=result_message,
+            message=f"{agent_name} 완료 ({duration_ms}ms): {_brief(result)}",
             payload={"duration_ms": duration_ms},
             trace_id=req.trace_id,
             request_id=req.request_id,
+            agent_job_id=job_id,
         )
         return {"status_code": 200, "message": result_message, "output": result}
     except Exception as e:
@@ -70,10 +83,11 @@ def run_invoke(
             report_id=req.report_id,
             agent_name=agent_name,
             event_type="agent.error",
-            message=str(e),
+            message=f"{agent_name} 실패: {e}",
             level="ERROR",
             trace_id=req.trace_id,
             request_id=req.request_id,
+            agent_job_id=job_id,
         )
         return {"status_code": 500, "message": str(e), "output": {}}
     finally:
