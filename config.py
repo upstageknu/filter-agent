@@ -6,7 +6,7 @@ load_dotenv()
 
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
 UPSTAGE_BASE_URL = os.getenv("UPSTAGE_BASE_URL", "https://api.upstage.ai/v1")
-SOLAR_MODEL = os.getenv("SOLAR_MODEL", "solar-pro")
+SOLAR_MODEL = os.getenv("SOLAR_MODEL", "solar-pro3")
 
 DOCUMENT_PARSE_URL = os.getenv(
     "DOCUMENT_PARSE_URL", "https://api.upstage.ai/v1/document-digitization"
