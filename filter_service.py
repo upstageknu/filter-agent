@@ -14,7 +14,9 @@ from input_pipeline import UnsupportedFormatError, load_raw_report_text
 from invoke_common import InvokeRequest, run_invoke
 from job_state import finish_job, health_payload, start_job
 
-AGENT_NAME = "bug_report_checker"
+# 허브의 job 큐/오케스트레이터는 이 단계를 "filter"라는 이름으로 관리한다.
+# (agent_results 안의 결과 필드명은 "bug_report_checker"로 별개 — 허브가 내부적으로 매핑한다)
+AGENT_NAME = "filter"
 
 app = FastAPI(title="bug-report-filter")
 

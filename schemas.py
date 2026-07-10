@@ -17,7 +17,8 @@ PARSER_OUTPUT_TEMPLATE = {
     "affected_software": None,
     "affected_version": None,
     "summary": None,
-    "cited_functions": [],
+    "cited_user_defined_functions": [],
+    "cited_library_functions": [],
     "function_calls": [],
     "cited_headers": [],
     "cited_commits": [],
@@ -94,7 +95,15 @@ def normalize_parser_output(raw: dict) -> dict:
     for key in ("title", "vuln_type", "affected_software", "affected_version", "summary", "poc_code"):
         result[key] = raw.get(key)
 
-    for key in ("cited_functions", "function_calls", "cited_headers", "cited_commits", "repro_steps", "claimed_impact"):
+    for key in (
+        "cited_user_defined_functions",
+        "cited_library_functions",
+        "function_calls",
+        "cited_headers",
+        "cited_commits",
+        "repro_steps",
+        "claimed_impact",
+    ):
         result[key] = raw.get(key) or []
 
     result["poc_present"] = bool(raw.get("poc_present", False))
