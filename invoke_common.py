@@ -50,7 +50,11 @@ def run_invoke(
         if not raw_text:
             raise ValueError("workflow.input.raw_report_txt가 비어있습니다")
 
-        result = process_fn(raw_text)
+        processed = process_fn(raw_text)
+        if isinstance(processed, tuple) and len(processed) == 2:
+            result, token_usage = processed
+        else:
+            result, token_usage = processed, {}
         duration_ms = int((time.monotonic() - start_time) * 1000)
 
         record_invocation(
@@ -65,6 +69,7 @@ def run_invoke(
             trace_id=req.trace_id,
             request_id=req.request_id,
             agent_job_id=job_id,
+            token_usage=token_usage,
         )
         emit_event(
             report_id=req.report_id,
@@ -76,7 +81,7 @@ def run_invoke(
             request_id=req.request_id,
             agent_job_id=job_id,
         )
-        return {"status_code": 200, "message": result_message, "output": result}
+        return {"status_code": 200, "message": result_message, "output": result, "token_usage": token_usage}
     except Exception as e:
         record_invocation(
             report_id=req.report_id,

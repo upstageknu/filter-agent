@@ -35,4 +35,11 @@ def check_bug_report(raw_report_txt: str) -> dict:
     )
 
     raw = safe_json_loads(response.choices[0].message.content)
-    return normalize_filter_output(raw)
+    usage = response.usage
+    token_usage = {
+        "prompt_tokens": int(getattr(usage, "prompt_tokens", 0) or 0),
+        "completion_tokens": int(getattr(usage, "completion_tokens", 0) or 0),
+        "total_tokens": int(getattr(usage, "total_tokens", 0) or 0),
+        "llm_calls": 1,
+    }
+    return normalize_filter_output(raw), token_usage

@@ -25,6 +25,7 @@ def record_invocation(
     trace_id: Optional[str] = None,
     request_id: Optional[str] = None,
     agent_job_id: Optional[int] = None,
+    token_usage: Optional[dict] = None,
 ) -> None:
     # report_id가 없으면 어느 워크플로우에 기록할지 알 수 없어 스킵한다.
     if not report_id:
@@ -48,6 +49,7 @@ def record_invocation(
             "message": result_message,
             "output": output if succeeded else None,
         },
+        "token_usage": token_usage or {},
     }
     if agent_job_id is not None:
         body["agent_job_id"] = agent_job_id
