@@ -35,7 +35,7 @@ def check_bug_report(raw_report_txt: str) -> dict:
     )
 
     raw = safe_json_loads(response.choices[0].message.content)
-    usage = response.usage
+    usage = getattr(response, "usage", None)
     token_usage = {
         "prompt_tokens": int(getattr(usage, "prompt_tokens", 0) or 0),
         "completion_tokens": int(getattr(usage, "completion_tokens", 0) or 0),
