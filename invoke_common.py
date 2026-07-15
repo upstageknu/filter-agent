@@ -12,6 +12,7 @@ class InvokeRequest(BaseModel):
     report_id: str
     trace_id: Optional[str] = None
     request_id: Optional[str] = None
+    agent_job_id: Optional[int] = None
 
 
 def _brief(result: dict, max_len: int = 300) -> str:
@@ -31,9 +32,9 @@ def run_invoke(
     process_fn: Callable[[str], dict],
     result_message: str,
 ) -> dict:
-    start_job(req.report_id)
+    start_job(req.agent_job_id or req.request_id or req.report_id)
     start_time = time.monotonic()
-    job_id = fetch_job_id(req.report_id, agent_name)
+    job_id = req.agent_job_id or fetch_job_id(req.report_id, agent_name)
     emit_event(
         report_id=req.report_id,
         agent_name=agent_name,
@@ -49,7 +50,11 @@ def run_invoke(
         if not raw_text:
             raise ValueError("workflow.input.raw_report_txt가 비어있습니다")
 
-        result = process_fn(raw_text)
+        processed = process_fn(raw_text)
+        if isinstance(processed, tuple) and len(processed) == 2:
+            result, token_usage = processed
+        else:
+            result, token_usage = processed, {}
         duration_ms = int((time.monotonic() - start_time) * 1000)
 
         record_invocation(
@@ -60,6 +65,11 @@ def run_invoke(
             model=model,
             prompt_version=prompt_version,
             duration_ms=duration_ms,
+            message=result_message,
+            trace_id=req.trace_id,
+            request_id=req.request_id,
+            agent_job_id=job_id,
+            token_usage=token_usage,
         )
         emit_event(
             report_id=req.report_id,
@@ -71,13 +81,17 @@ def run_invoke(
             request_id=req.request_id,
             agent_job_id=job_id,
         )
-        return {"status_code": 200, "message": result_message, "output": result}
+        return {"status_code": 200, "message": result_message, "output": result, "token_usage": token_usage}
     except Exception as e:
         record_invocation(
             report_id=req.report_id,
             agent_name=agent_name,
             status="FAILED",
             error={"message": str(e)},
+            message=f"{agent_name} failed: {e}",
+            trace_id=req.trace_id,
+            request_id=req.request_id,
+            agent_job_id=job_id,
         )
         emit_event(
             report_id=req.report_id,
@@ -89,6 +103,6 @@ def run_invoke(
             request_id=req.request_id,
             agent_job_id=job_id,
         )
-        return {"status_code": 500, "message": str(e), "output": {}}
+        return {"status_code": 500, "message": str(e), "output": None}
     finally:
         finish_job()

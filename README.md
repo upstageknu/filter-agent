@@ -1,7 +1,7 @@
 # filter-agent
 
 버그바운티 파이프라인의 input 정규화 + 버그 리포트 형식 필터 agent.
-Upstage Document Parse(문서 → 텍스트)와 Solar-Pro(필터 LLM)를 사용한다.
+Upstage Document Parse(문서 → 텍스트)와 Solar Pro 3(필터 LLM)를 사용한다.
 
 ## 로컬 실행
 
@@ -34,7 +34,7 @@ docker run --env-file .env -p 8000:8000 filter-agent
 ## 동작
 
 1. 파일/텍스트 → `raw_report_txt` (Document Parse 또는 직접 읽기)
-2. 필터 agent(Solar-Pro) → `is_bug_report`/`confidence`/`reason` 판단.
+2. 필터 agent(Solar Pro 3) → `is_bug_report`/`confidence`/`reason` 판단.
    `is_bug_report: false`인데 `confidence`가 `FILTER_REJECT_CONFIDENCE_THRESHOLD`(기본 0.6) 미만이면
    애매한 것으로 보고 통과시킨다 (반려는 "아님"을 확신할 때만).
 3. 처리 결과를 허브의 `POST /db/workflows/{report_id}/agents/bug_report_checker/invocations`로 기록.

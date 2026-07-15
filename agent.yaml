@@ -1,6 +1,17 @@
-name: filter-agent
+name: filter
 description: 문서 입력 정규화(Document Parse) + 버그 리포트 형식 판별 agent
 
 env:
   required:
     - UPSTAGE_API_KEY
+    - HUB_BASE_URL
+  optional:
+    - ORCHESTRATOR_API_KEY
+    - UPSTAGE_BASE_URL
+    - SOLAR_MODEL
+
+endpoints:
+  health: GET /health
+  invoke: POST /invoke
+
+port: 8000
